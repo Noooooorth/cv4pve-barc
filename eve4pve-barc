@@ -38,6 +38,9 @@ declare path_backup=''
 declare -i vm_id=0
 declare -A vm_ids
 
+# Image name
+declare -i image_name=''
+
 function usage(){
    shift
 
@@ -189,6 +192,7 @@ function parse_opts(){
     while true; do    
       case "$1" in
         --vmid) opt_vm_ids=$2; shift 2;;
+        --image_name) opt_image_name=$2; shift 2;;
         --label) opt_label="$2"; shift 2;;
         --keep) opt_keep=$2; shift 2;;
         --path) opt_path_backup="$2"; shift 2;;
@@ -219,7 +223,7 @@ function parse_opts(){
         [ ! -d "$opt_path_backup" ] && { log info "Path Backup is not set"; end_process 1; }
     fi
 
-    [ -z "$opt_vm_ids" ] && { log info "VM id is not set."; end_process 1; }
+    #[ -z "$opt_vm_ids" ] && { log info "VM id is not set."; end_process 1; }
     if [ "$opt_vm_ids" = "all" ]; then
         #all in cluster
 
@@ -261,7 +265,7 @@ function parse_opts(){
         
     fi
 
-    [ -z "$opt_label" ] && { log info "Label is not set correctly"; end_process 1; }
+    #[ -z "$opt_label" ] && { log info "Label is not set correctly"; end_process 1; }
     [ "$opt_keep" -le 0 ] && { log info "Keep is not set correctly. Value > 0."; end_process 1; }
 
     snap_name_prefix="barc$opt_label"
@@ -1029,6 +1033,30 @@ function end_process(){
     exit "$rc";
 }
 
+function list(){
+	echo "ls: hello"
+
+	parse_opts "$@"
+
+	case "$2" in
+        images)
+            images=($(ls "$path_backup/"*$EXT_IMAGE | \
+                  xargs -n 1 basename | \
+                  awk '{printf "%s %s\n",substr($1,13,length($1)-16),substr($1,13,length($1)-16)}')) 
+		;;
+		image_date)
+            timestamps=($(ls -r "$path_backup/"*$image_name* | \
+                      xargs -n 1 basename | \
+                      awk '{print substr($1,1,12),substr($1,1,2) "-" substr($1,3,2) "-" substr($1,5,2) "_" substr($1,7,2) ":" substr($1,9,2) ":" substr($1,11,2)}'))
+		;;
+		pools)
+			pools=($(rados lspools | awk '{printf "%s %s\n",$1,$1}'))
+		;;
+        *) echo "Please assign the type to list";;
+    esac
+
+}
+
 function main(){    
     [ $# = 0 ] && usage;
 
@@ -1042,7 +1070,8 @@ function main(){
         clean) clean "$@";;
         status) status "$@";; 
         reset) reset "$@";; 
-        assemble) assemble "$@";; 
+        assemble) assemble "$@";;
+        list) list "$@";; 
         *) usage;;
     esac
 
