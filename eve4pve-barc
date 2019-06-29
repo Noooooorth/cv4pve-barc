@@ -39,7 +39,10 @@ declare -i vm_id=0
 declare -A vm_ids
 
 # Image name
-declare -i image_name=''
+declare -i src_image_name=''
+declare -i src_image_timestamp=''
+declare -i pool_name=''
+declare -i des_image_name=''
 
 function usage(){
    shift
@@ -183,6 +186,7 @@ function parse_opts(){
            --options '' \
            --longoptions=path:,vmid:,label:,keep:,mail: \
            --longoptions=script:,syslog,debug,dry-run,unprotect-snap \
+           --longoptions=src_image_name:,src_image_timestamp:,pool_name:,des_image_name: \
            --name "$PROGNAME" \
            -- "$@") \
            || end_process 128
@@ -192,7 +196,12 @@ function parse_opts(){
     while true; do    
       case "$1" in
         --vmid) opt_vm_ids=$2; shift 2;;
-        --image_name) opt_image_name=$2; shift 2;;
+
+        --src_image_name) src_image_name=$2; shift 2;;
+        --src_image_timestamp) src_image_timestamp=$2; shift 2;;
+        --pool_name) pool_name=$2; shift 2;;
+        --des_image_name) des_image_name=$2; shift 2;;
+
         --label) opt_label="$2"; shift 2;;
         --keep) opt_keep=$2; shift 2;;
         --path) opt_path_backup="$2"; shift 2;;
@@ -223,7 +232,7 @@ function parse_opts(){
         [ ! -d "$opt_path_backup" ] && { log info "Path Backup is not set"; end_process 1; }
     fi
 
-    #[ -z "$opt_vm_ids" ] && { log info "VM id is not set."; end_process 1; }
+    [ -z "$opt_vm_ids" ] && { log info "VM id is not set."; end_process 1; }
     if [ "$opt_vm_ids" = "all" ]; then
         #all in cluster
 
@@ -265,7 +274,7 @@ function parse_opts(){
         
     fi
 
-    #[ -z "$opt_label" ] && { log info "Label is not set correctly"; end_process 1; }
+    [ -z "$opt_label" ] && { log info "Label is not set correctly"; end_process 1; }
     [ "$opt_keep" -le 0 ] && { log info "Keep is not set correctly. Value > 0."; end_process 1; }
 
     snap_name_prefix="barc$opt_label"
@@ -814,63 +823,68 @@ function restore(){
     for vm_id in $vm_ids; do
         get_path   
 
-        local title="EnterpriseVE BARC | Restore image"
+        #local title="EnterpriseVE BARC | Restore image"
 
         #list all image available 
-        images=($(ls "$path_backup/"*$EXT_IMAGE | \
-                  xargs -n 1 basename | \
-                  awk '{printf "%s %s\n",substr($1,13,length($1)-16),substr($1,13,length($1)-16)}'))
+        #images=($(ls "$path_backup/"*$EXT_IMAGE | \
+        #          xargs -n 1 basename | \
+        #          awk '{printf "%s %s\n",substr($1,13,length($1)-16),substr($1,13,length($1)-16)}'))
 
         #select image to recovery
         local image;
-        image=$(whiptail --title "$title" \
-                --menu "Choose from available images:" \
-                --notags 25 60 14 "${images[@]}" 3>&1 1>&2 2>&3)
+        #image=$(whiptail --title "$title" \
+        #        --menu "Choose from available images:" \
+        #        --notags 25 60 14 "${images[@]}" 3>&1 1>&2 2>&3)
+        image=$src_image_name
 
         [ -z "$image" ] && exit 1
 
         #list all date available 
-        timestamps=($(ls -r "$path_backup/"*$image* | \
-                      xargs -n 1 basename | \
-                      awk '{print substr($1,1,12),substr($1,1,2) "-" substr($1,3,2) "-" substr($1,5,2) "_" substr($1,7,2) ":" substr($1,9,2) ":" substr($1,11,2)}'))
+        #timestamps=($(ls -r "$path_backup/"*$image* | \
+        #              xargs -n 1 basename | \
+        #              awk '{print substr($1,1,12),substr($1,1,2) "-" substr($1,3,2) "-" substr($1,5,2) "_" substr($1,7,2) ":" substr($1,9,2) ":" substr($1,11,2)}'))
 
         #select timestamp
         local timestamp
-        timestamp=$(whiptail --title "$title" \
-                    --menu "Choose from available date [$image]:" \
-                    --notags 25 60 14 "${timestamps[@]}" 3>&1 1>&2 2>&3)
+        #timestamp=$(whiptail --title "$title" \
+        #            --menu "Choose from available date [$image]:" \
+        #            --notags 25 60 14 "${timestamps[@]}" 3>&1 1>&2 2>&3)
+        timestamp=$src_image_timestamp
 
         [ -z "$timestamp" ] && exit 1
 
         #list all pools
-        pools=($(rados lspools | awk '{printf "%s %s\n",$1,$1}'))
+        #pools=($(rados lspools | awk '{printf "%s %s\n",$1,$1}'))
 
         #select timestamp
-        local pool_name; 
-        pool_name=$(whiptail --title "$title" \
-                    --menu "Choose from available Ceph pools:" \
-                    --notags 25 60 14 "${pools[@]}" 3>&1 1>&2 2>&3)
+        #local pool_name; 
+        #pool_name=$(whiptail --title "$title" \
+        #            --menu "Choose from available Ceph pools:" \
+        #            --notags 25 60 14 "${pools[@]}" 3>&1 1>&2 2>&3)
+        pool_name=$pool_name
 
         [ -z "$pool_name" ] && exit 1
-
+        
         while true; do
             #name_import
             local name_import; 
-            name_import=$(whiptail --title "$title" \
-                        --inputbox "Specify image name import" 8 78 \
-                        "$(echo "$image" | awk '{ split($0,a,"."); print a[2]}')" 3>&1 1>&2 2>&3)
+            #name_import=$(whiptail --title "$title" \
+            #            --inputbox "Specify image name import" 8 78 \
+            #            "$(echo "$image" | awk '{ split($0,a,"."); print a[2]}')" 3>&1 1>&2 2>&3)
+            name_import=$des_image_name
                 
             [ -z "$name_import" ] && exit 1    
             if ! rbd ls "$pool_name" | grep -q "$name_import"; then
                 break;
             else
-                whiptail --title "$title" --msgbox "Image $pool_name/$name_import exist!" 8 78
+                #whiptail --title "$title" --msgbox "Image $pool_name/$name_import exist!" 8 78
+                echo "Image $pool_name/$name_import exist!" && exit 1
             fi
         done
 
-        if ! whiptail --title "$title" --yesno "Confrim restore $image in $pool_name/$name_import?" 8 78; then
-            exit 1
-        fi
+        #if ! whiptail --title "$title" --yesno "Confrim restore $image in $pool_name/$name_import?" 8 78; then
+        #    exit 1
+        #fi
 
         call_hook_script "restore-job-start" "-" "-"
 
@@ -957,38 +971,40 @@ function assemble(){
     for vm_id in $vm_ids; do
         get_path   
 
-        local title="EnterpriseVE BARC | Assemble"
+        #local title="EnterpriseVE BARC | Assemble"
 
         #list all image available 
-        images=($(ls "$path_backup/"*$EXT_IMAGE | \
-                  xargs -n 1 basename | \
-                  awk '{printf "%s %s\n",substr($1,13,length($1)-16),substr($1,13,length($1)-16)}'))
+        #images=($(ls "$path_backup/"*$EXT_IMAGE | \
+        #          xargs -n 1 basename | \
+        #          awk '{printf "%s %s\n",substr($1,13,length($1)-16),substr($1,13,length($1)-16)}'))
 
         #select image to recovery
         local image;
-        image=$(whiptail --title "$title" \
-                --menu "Choose from available images:" \
-                --notags 25 60 14 "${images[@]}" 3>&1 1>&2 2>&3)
+        #image=$(whiptail --title "$title" \
+        #        --menu "Choose from available images:" \
+        #        --notags 25 60 14 "${images[@]}" 3>&1 1>&2 2>&3)
+        image=$src_image_name        
 
         [ -z "$image" ] && exit 1
 
         #list all date available 
-        timestamps=($(ls -r "$path_backup/"*$image* | \
-                      xargs -n 1 basename | \
-                      awk '{print substr($1,1,12),substr($1,1,2) "-" substr($1,3,2) "-" substr($1,5,2) "_" substr($1,7,2) ":" substr($1,9,2) ":" substr($1,11,2)}'))
+        #timestamps=($(ls -r "$path_backup/"*$image* | \
+        #              xargs -n 1 basename | \
+        #              awk '{print substr($1,1,12),substr($1,1,2) "-" substr($1,3,2) "-" substr($1,5,2) "_" substr($1,7,2) ":" substr($1,9,2) ":" substr($1,11,2)}'))        
 
         #select timestamp
         local timestamp
-        timestamp=$(whiptail --title "$title" \
-                    --menu "Choose from available date [$image]:" \
-                    --notags 25 60 14 "${timestamps[@]}" 3>&1 1>&2 2>&3)
+        #timestamp=$(whiptail --title "$title" \
+        #            --menu "Choose from available date [$image]:" \
+        #            --notags 25 60 14 "${timestamps[@]}" 3>&1 1>&2 2>&3)
+        timestamp=$src_image_name        
 
         [ -z "$timestamp" ] && exit 1
 
         local new_image="assemble-$image" 
-        if ! whiptail --title "$title" --yesno "Confrim assemble $image in $new_image?" 8 78; then
-            exit 1
-        fi
+        #if ! whiptail --title "$title" --yesno "Confrim assemble $image in $new_image?" 8 78; then
+        #    exit 1
+        #fi
 
         call_hook_script "assemble-job-start" "-" "-"
         log info "Start assemble process"
@@ -1034,23 +1050,36 @@ function end_process(){
 }
 
 function list(){
-	echo "ls: hello"
-
-	parse_opts "$@"
+    parse_opts "$@"
 
 	case "$2" in
         images)
-            images=($(ls "$path_backup/"*$EXT_IMAGE | \
-                  xargs -n 1 basename | \
-                  awk '{printf "%s %s\n",substr($1,13,length($1)-16),substr($1,13,length($1)-16)}')) 
+            for vm_id in ${vm_ids[@]}; do
+                get_path
+                images=($(find "$path_backup" -name *$EXT_IMAGE | \
+                        xargs -n 1 basename | \
+                        awk '{printf "%s\n",substr($1,13,length($1)-16)}' )) 
+                for item in ${images[@]}; do
+                    echo $item
+                done
+            done
 		;;
-		image_date)
-            timestamps=($(ls -r "$path_backup/"*$image_name* | \
-                      xargs -n 1 basename | \
-                      awk '{print substr($1,1,12),substr($1,1,2) "-" substr($1,3,2) "-" substr($1,5,2) "_" substr($1,7,2) ":" substr($1,9,2) ":" substr($1,11,2)}'))
+		timestamps)
+            for vm_id in ${vm_ids[@]}; do
+                get_path
+                timestamps=($(ls -r "$path_backup/"*$res_image_name* | \
+                            xargs -n 1 basename | \
+                            awk '{print substr($1,1,2) "-" substr($1,3,2) "-" substr($1,5,2) "_" substr($1,7,2) ":" substr($1,9,2) ":" substr($1,11,2)}'))
+                for item in ${timestamps[@]}; do
+                    echo $item
+                done
+            done
 		;;
 		pools)
-			pools=($(rados lspools | awk '{printf "%s %s\n",$1,$1}'))
+			pools=($(rados lspools))
+            for item in ${pools[@]}; do
+                echo $item
+            done
 		;;
         *) echo "Please assign the type to list";;
     esac
