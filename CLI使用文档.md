@@ -8,9 +8,14 @@
 
   ```shell
   eve4pve-barc list images \
-      --vmid=101 \      # PVE虚拟机ID
-      --label='daily' \ # 备份频率（在这里无实际意义）
-      --path=/tmp/bck   # 备份文件存放位置
+      --vmid=101 \
+      --label='daily' \
+      --path=/tmp/bck
+      
+  # 参数
+  ## vmid: PVE虚拟机ID
+  ## label: 备份频率（在这里无实际意义）
+  ## path: 备份文件存放位置
   ```
 
 - 输出：
@@ -29,10 +34,16 @@
 
   ```shell
   eve4pve-barc list timestamps \
-      --vmid=101 \      #PVE虚拟机ID
-      --label='daily' \ #备份频率（在这里无实际意义）
-      --path=/tmp/bck \ #备份文件存放位置
-      --src_image_name="pool-hdd.vm-101-disk-0" #镜像名
+      --vmid=101 \
+      --label='daily' \
+      --path=/tmp/bck \
+      --src_image_name="pool-hdd.vm-101-disk-0"
+      
+  # 参数
+  ## vmid: PVE虚拟机ID
+  ## label: 备份频率（在这里无实际意义）
+  ## path: 备份文件存放位置
+  ## src_image_name: 镜像名
   ```
 
 - 输出：
@@ -51,9 +62,14 @@
 
   ```shell
   eve4pve-barc list pools \
-      --vmid=101 \      #PVE虚拟机ID（在这里无实际意义）
-      --label='daily' \ #备份频率（在这里无实际意义）
-      --path=/tmp/bck   #备份文件存放位置（在这里无实际意义）
+      --vmid=101 \
+      --label='daily' \
+      --path=/tmp/bck
+      
+  # 参数
+  ## vmid: PVE虚拟机ID（在这里无实际意义）
+  ## label: 备份频率（在这里无实际意义）
+  ## path: 备份文件存放位置（在这里无实际意义）
   ```
 
 - 输出：
@@ -70,13 +86,22 @@
 
   ```shell
   eve4pve-barc restore \
-      --vmid=101 \      #PVE虚拟机ID
-      --label='daily' \ #备份频率（在这里无实际意义）
-      --path=/tmp/bck \ #备份文件存放位置
-      --src_image_name='pool-hdd.vm-101-disk-0' \ #备份镜像名
-      --src_image_timestamp='19-09-07_17:56:06' \ #备份镜像的时间戳
-      --pool_name='pool-hdd' \ #恢复出来的镜像的存放位置
-      --des_image_name='pool-hdd.vm-101-disk-0_restore_888' #恢复出来的镜像名
+      --vmid=101 \
+      --label='daily' \
+      --path=/tmp/bck \
+      --src_image_name='pool-hdd.vm-101-disk-0' \
+      --src_image_timestamp='19-09-07_17:56:06' \
+      --pool_name='pool-hdd' \
+      --des_image_name='vm-101-disk-0_restore_888'
+      
+  # 参数
+  ## vmid: PVE虚拟机ID
+  ## label: 备份频率（在这里无实际意义）
+  ## path: 备份文件存放位置
+  ## src_image_name: 备份镜像名
+  ## src_image_timestamp: 备份镜像的时间戳
+  ## pool_name: 恢复出来的镜像的存放位置
+  ## des_image_name: 恢复出来的镜像名
   ```
 
 - 输出：
@@ -90,7 +115,7 @@
   Importing image diff: 100% complete...done.
   Remove all snapshots
   Removing all snapshots: 100% complete...done.
-  Backup pool-hdd.vm-101-disk-0 restored in pool-hdd/pool-hdd.vm-101-disk-0_restore_888 with success!
+  Backup pool-hdd.vm-101-disk-0 restored in pool-hdd/vm-101-disk-0_restore_888 with success!
   Consider to manually create VM/CT and change config file from backup adapting restored image.
   End restore 2019-09-07 21:59:22
   ```
@@ -101,11 +126,18 @@
 
   ```shell
   eve4pve-barc assemble \
-      --vmid=101 \      #PVE虚拟机ID
-      --label='daily' \ #备份频率（在这里无实际意义）
-      --path=/tmp/bck \ #备份文件存放位置
-      --src_image_name='pool-hdd.vm-101-disk-0' \ #备份镜像名
-      --src_image_timestamp='19-09-07_17:51:20'   #备份镜像的时间戳
+      --vmid=101 \
+      --label='daily' \
+      --path=/tmp/bck \
+      --src_image_name='pool-hdd.vm-101-disk-0' \
+      --src_image_timestamp='19-09-07_17:51:20'
+      
+  # 参数
+  ## vmid: PVE虚拟机ID
+  ## label: 备份频率（在这里无实际意义）
+  ## path: 备份文件存放位置
+  ## src_image_name: 备份镜像名
+  ## src_image_timestamp: 备份镜像的时间戳
   ```
 
 - 输出：
@@ -125,3 +157,4 @@
   ```
 
   
+
